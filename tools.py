@@ -6,6 +6,9 @@ from database import DatabaseDriver
 
 DB = DatabaseDriver()
 
+# Global variable to store current session_id
+current_session_id = None
+
 
 @function_tool()
 async def check_membership(
@@ -15,7 +18,10 @@ async def check_membership(
     Check if a phone number is in the members database and add it if not present.
     """
     try:
-        logging.info(f"agent_state attributes: {dir(context.session)}")
+        # Access global session_id
+        global current_session_id
+        session_id = current_session_id or 'Unknown'
+        logging.info(f"Session ID in tool: {session_id}")
         
         cleaned_phone = DB.clean_phone_number(phone_number)
         

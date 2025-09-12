@@ -11,6 +11,7 @@ from livekit.plugins.turn_detector.english import EnglishModel
 from livekit.plugins import (groq, cartesia, deepgram, silero, google)
 from prompts import AGENT_INSTRUCTION, SESSION_INSTRUCTION
 from tools import check_membership
+import tools
 import enum
 
 load_dotenv()
@@ -82,7 +83,6 @@ async def entrypoint(ctx: agents.JobContext):
     session = AgentSession()
     agent = Assistant(instructions=AGENT_INSTRUCTION, room=ctx.room)
 
-
     room_input = RoomInputOptions(
             # - For telephony applications, use `BVCTelephony` for best results
             audio_enabled=True,
@@ -94,6 +94,10 @@ async def entrypoint(ctx: agents.JobContext):
         transcription_enabled=True
     )
 
+    # Store session_id in global variable for access in tools
+    tools.current_session_id = agent.session_id
+    logging.info(f"Session ID stored globally: {agent.session_id}")
+    
     await session.start(
         room=ctx.room,
         agent=agent,
