@@ -18,8 +18,6 @@ load_dotenv()
 setup_logging()
 logger = logging.getLogger("groq-agent")
 
-class Member(enum.Enum):
-    Phone = "phone"
 
 class Assistant(Agent):
     def __init__(self, instructions: str, room: rtc.Room) -> None:
@@ -52,19 +50,15 @@ class Assistant(Agent):
             voice="Aoede",
             temperature=0.8,
         ),
-            tools=[
+        vad=silero.VAD.load(),
+        turn_detection = EnglishModel(),
+        tools=[
                 check_membership
             ],
 
         )
-        
-        self.room = room,
         self.session_id = str(uuid4())
 
-        self._member = {
-            Member.Phone : "" 
-            }
-        
 
 
 async def entrypoint(ctx: agents.JobContext):
@@ -96,6 +90,8 @@ async def entrypoint(ctx: agents.JobContext):
 
     # Store session_id in global variable for access in tools
     tools.current_session_id = agent.session_id
+    tools.current_phone_number = "8900324970"
+
     logging.info(f"Session ID stored globally: {agent.session_id}")
     
     await session.start(

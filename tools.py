@@ -8,12 +8,12 @@ DB = DatabaseDriver()
 
 # Global variable to store current session_id
 current_session_id = None
-
+current_phone_number = None
 
 @function_tool()
 async def check_membership(
     context: RunContext,  # type: ignore
-    phone_number: str) -> str:
+    ) -> str:
     """
     Check if a phone number is in the members database and add it if not present.
     """
@@ -21,6 +21,8 @@ async def check_membership(
         # Access global session_id
         global current_session_id
         session_id = current_session_id or 'Unknown'
+        global current_phone_number
+        phone_number = current_phone_number or 'Unknown'
         logging.info(f"Session ID in tool: {session_id}")
         
         cleaned_phone = DB.clean_phone_number(phone_number)
