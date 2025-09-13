@@ -12,11 +12,13 @@ from livekit.plugins import (groq, cartesia, deepgram, silero, google)
 from instructions import AGENT_INSTRUCTION, SESSION_INSTRUCTION
 from tools import check_membership
 import tools
+from membership_operations import MembershipOperations
 
 
 load_dotenv()
 setup_logging()
 logger = logging.getLogger("groq-agent")
+Member = MembershipOperations()
 
 
 class Assistant(Agent):
@@ -87,10 +89,12 @@ async def entrypoint(ctx: agents.JobContext):
         audio_enabled=True,
         transcription_enabled=True
     )
-
+    
+    phone_number = "9474414995"
     # Store session_id in global variable for access in tools
     tools.current_session_id = agent.session_id
-    tools.current_phone_number = "9474414995"
+    tools.current_phone_number = phone_number
+
 
     logging.info(f"Session ID stored globally: {agent.session_id}")
     
@@ -100,6 +104,10 @@ async def entrypoint(ctx: agents.JobContext):
         room_input_options=room_input,
         room_output_options=room_output
     )
+    
+    MemberCreated = Member.add_member_session(phone_number, agent.session_id)
+    if not MemberCreated:
+        logging.info(f"Failed to create session for: {agent.session_id}")
 
     await session.generate_reply(
         instructions=SESSION_INSTRUCTION,
