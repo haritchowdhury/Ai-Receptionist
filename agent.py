@@ -10,9 +10,12 @@ from uuid import uuid4
 from livekit.plugins.turn_detector.english import EnglishModel
 from livekit.plugins import (groq, cartesia, deepgram, silero, google)
 from instructions import AGENT_INSTRUCTION, SESSION_INSTRUCTION
-from tools import check_membership
+from tools import check_membership, query_knowledge_base, text_supervisor, get_huggingface_embedding
 import tools
 from membership_operations import MembershipOperations
+import asyncio
+import os
+from upstash_vector import Index
 
 
 load_dotenv()
@@ -24,9 +27,11 @@ Member = MembershipOperations()
 class Assistant(Agent):
     def __init__(self, instructions: str, room: rtc.Room) -> None:
         """
+        """
+        
         super().__init__(
             instructions=instructions,
-            llm=groq.LLM(model="llama3-8b-8192"),
+            llm=groq.LLM(model="moonshotai/kimi-k2-instruct-0905"),
             stt=deepgram.STT(),
             tts=cartesia.TTS(
                 model="sonic-2",
@@ -36,16 +41,17 @@ class Assistant(Agent):
             vad=silero.VAD.load(),
             turn_detection=EnglishModel(),
             tools=[
-                get_weather,
-                search_web,
-                check_membership
+                check_membership,
+                query_knowledge_base,
+                text_supervisor
             ],
 
         )
-        """
+        
+        
 
         """
-        """
+        
         super().__init__(
             instructions=instructions,
             llm=google.beta.realtime.RealtimeModel(
@@ -55,11 +61,44 @@ class Assistant(Agent):
         vad=silero.VAD.load(),
         turn_detection = EnglishModel(),
         tools=[
-                check_membership
+                check_membership,
+                query_knowledge_base,
+                text_supervisor
             ],
 
         )
+        """
         self.session_id = str(uuid4())
+
+    async def _pre_warm_services(self):
+        """Pre-warm HuggingFace and Upstash services to avoid cold starts"""
+        try:
+            logging.info("Pre-warming serverless functions...")
+
+            # Pre-warm HuggingFace embedding API
+            hf_api_key = os.getenv("HUGGINGFACE_API_KEY")
+            if hf_api_key:
+                test_embedding = get_huggingface_embedding("test query", hf_api_key)
+                logging.info("HuggingFace API pre-warmed successfully")
+            else:
+                logging.warning("HUGGINGFACE_API_KEY not found, skipping HF pre-warming")
+
+            # Pre-warm Upstash Vector DB
+            vector_client = Index(
+                url=os.getenv("UPSTASH_VECTOR_REST_URL"),
+                token=os.getenv("UPSTASH_VECTOR_REST_TOKEN")
+            )
+            # Make a simple test query with a dummy vector (384 dimensions for bge-small-en-v1.5)
+            dummy_vector = [0.1] * 384
+            test_results = vector_client.query(
+                vector=dummy_vector,
+                top_k=1,
+                namespace=os.getenv("NAMESPACE")
+            )
+            logging.info("Upstash Vector DB pre-warmed successfully")
+
+        except Exception as e:
+            logging.warning(f"Pre-warming failed (non-critical): {e}")
 
 
 
@@ -78,6 +117,9 @@ async def entrypoint(ctx: agents.JobContext):
 
     session = AgentSession()
     agent = Assistant(instructions=AGENT_INSTRUCTION, room=ctx.room)
+
+    # Pre-warm serverless functions before starting session
+    await agent._pre_warm_services()
 
     room_input = RoomInputOptions(
             # - For telephony applications, use `BVCTelephony` for best results
@@ -115,4 +157,6 @@ async def entrypoint(ctx: agents.JobContext):
 
 
 if __name__ == "__main__":
-    agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
+    agents.cli.run_app(agents.WorkerOptions(
+        entrypoint_fnc=entrypoint,
+    ))

@@ -18,6 +18,9 @@ class MemberSession:
     phone_number: str
     session_id: str
     created_at: datetime
+    question: Optional[str] = None
+    status: Optional[str] = None
+    answer: Optional[str] = None
 
 class DatabaseDriver:
     def __init__(self, db_path: str = "members.db"):
@@ -51,7 +54,10 @@ class DatabaseDriver:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     phone_number TEXT NOT NULL,
                     session_id TEXT NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    question TEXT,
+                    status TEXT,
+                    answer TEXT
                 )
             """)
             

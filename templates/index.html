@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Sessions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #555;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            padding: 20px;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pending { background-color: #fff3cd; color: #856404; }
+        .status-resolved { background-color: #d1edff; color: #004085; }
+        .status-failed { background-color: #f8d7da; color: #721c24; }
+        .refresh-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .refresh-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Member Sessions</h1>
+        <button class="refresh-btn" onclick="loadSessions()">Refresh Data</button>
+        <div id="content">
+            <div class="loading">Loading sessions...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadSessions() {
+            const contentDiv = document.getElementById('content');
+            contentDiv.innerHTML = '<div class="loading">Loading sessions...</div>';
+            
+            try {
+                const response = await fetch('/api/member-sessions');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch sessions');
+                }
+                
+                const sessions = await response.json();
+                displaySessions(sessions);
+            } catch (error) {
+                contentDiv.innerHTML = `<div class="error">Error loading sessions: ${error.message}</div>`;
+            }
+        }
+        
+        function displaySessions(sessions) {
+            const contentDiv = document.getElementById('content');
+            
+            if (sessions.length === 0) {
+                contentDiv.innerHTML = '<div class="loading">No sessions found.</div>';
+                return;
+            }
+            
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Phone Number</th>
+                        <th>Session ID</th>
+                        <th>Created At</th>
+                        <th>Question</th>
+                        <th>Status</th>
+                        <th>Answer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sessions.map(session => `
+                        <tr>
+                            <td>${session.id}</td>
+                            <td>${session.phone_number || '-'}</td>
+                            <td>${session.session_id || '-'}</td>
+                            <td>${formatDate(session.created_at)}</td>
+                            <td>${session.question || '-'}</td>
+                            <td>${formatStatus(session.status)}</td>
+                            <td>${session.answer || '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            
+            contentDiv.innerHTML = '';
+            contentDiv.appendChild(table);
+        }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleString();
+        }
+        
+        function formatStatus(status) {
+            if (!status) return '-';
+            const className = `status status-${status.toLowerCase()}`;
+            return `<span class="${className}">${status}</span>`;
+        }
+        
+        // Load sessions when page loads
+        document.addEventListener('DOMContentLoaded', loadSessions);
+    </script>
+</body>
+</html>
