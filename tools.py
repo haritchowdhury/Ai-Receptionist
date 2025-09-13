@@ -2,9 +2,9 @@ import logging
 from logging_config import setup_logging
 from livekit.agents import function_tool, RunContext
 import requests
-from database import DatabaseDriver
+from membership_operations import MembershipOperations
 
-DB = DatabaseDriver()
+Member = MembershipOperations()
 
 # Global variable to store current session_id
 current_session_id = None
@@ -25,19 +25,19 @@ async def check_membership(
         phone_number = current_phone_number or 'Unknown'
         logging.info(f"Session ID in tool: {session_id}")
         
-        cleaned_phone = DB.clean_phone_number(phone_number)
+        cleaned_phone = Member.clean_phone_number(phone_number)
         
         if not cleaned_phone:
             logging.error(f"Invalid phone number format: {phone_number}")
             return "Please provide a valid phone number." 
         
-        isMember = DB.check_phone_number_exists(cleaned_phone)
+        isMember = Member.check_phone_number_exists(cleaned_phone)
         if isMember:
             #db_driver.add_member_session(cleaned_phone, context.session.agent_state)
             logging.info(f"Phone number {cleaned_phone} is already a member")
             return "You are already a member"
         else:
-            createMember = DB.add_phone_number(cleaned_phone)
+            createMember = Member.add_phone_number(cleaned_phone)
             if createMember:
                 return "Your number has been added to member's database"
             else:

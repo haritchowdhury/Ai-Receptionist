@@ -9,10 +9,10 @@ from livekit.plugins import (
 from uuid import uuid4
 from livekit.plugins.turn_detector.english import EnglishModel
 from livekit.plugins import (groq, cartesia, deepgram, silero, google)
-from prompts import AGENT_INSTRUCTION, SESSION_INSTRUCTION
+from instructions import AGENT_INSTRUCTION, SESSION_INSTRUCTION
 from tools import check_membership
 import tools
-import enum
+
 
 load_dotenv()
 setup_logging()
@@ -90,7 +90,7 @@ async def entrypoint(ctx: agents.JobContext):
 
     # Store session_id in global variable for access in tools
     tools.current_session_id = agent.session_id
-    tools.current_phone_number = "8900324970"
+    tools.current_phone_number = "9474414995"
 
     logging.info(f"Session ID stored globally: {agent.session_id}")
     
