@@ -99,8 +99,19 @@ class MembershipOperations(DatabaseDriver):
                 params = [status]
                 
                 if question is not None:
+                    # Get current question to append to it
+                    cursor.execute("SELECT question FROM member_sessions WHERE session_id = ?", (session_id,))
+                    current_row = cursor.fetchone()
+                    current_question = current_row[0] if current_row and current_row[0] else ""
+
+                    # Append new question to existing question
+                    if current_question:
+                        combined_question = current_question + "," + question
+                    else:
+                        combined_question = question
+
                     update_fields.append("question = ?")
-                    params.append(question)
+                    params.append(combined_question)
                     
                 if answer is not None:
                     update_fields.append("answer = ?")
@@ -115,7 +126,7 @@ class MembershipOperations(DatabaseDriver):
                 if cursor.rowcount > 0:
                     updated_fields = f"status: {status}"
                     if question is not None:
-                        updated_fields += f", question: '{question}'"
+                        updated_fields += f", question: '{combined_question}'"
                     if answer is not None:
                         updated_fields += f", answer: '{answer}'"
                     logging.info(f"Updated session {session_id} with {updated_fields}")
