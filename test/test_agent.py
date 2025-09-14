@@ -1,6 +1,10 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from dotenv import load_dotenv
 import logging
-from logging_config import setup_logging
+from utils import setup_logging
 from livekit import agents, rtc
 from livekit.agents import AgentSession, Agent, RoomInputOptions, RoomOutputOptions
 from livekit.plugins import (
@@ -9,7 +13,7 @@ from livekit.plugins import (
 from uuid import uuid4
 from livekit.plugins.turn_detector.english import EnglishModel
 from livekit.plugins import (groq, cartesia, deepgram, silero)
-from instructions import AGENT_INSTRUCTION, SESSION_INSTRUCTION
+from utils import AGENT_INSTRUCTION, SESSION_INSTRUCTION
 
 load_dotenv()
 setup_logging()

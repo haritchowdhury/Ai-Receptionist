@@ -1,36 +1,22 @@
-import sqlite3
 import logging
 from typing import Optional
 from datetime import datetime
-from database import DatabaseDriver, Member, MemberSession
+from .database import DatabaseDriver
+from dataclasses import dataclass
 
 
-class MembershipOperations(DatabaseDriver):
+@dataclass
+class MemberSession:
+    id: int
+    phone_number: str
+    session_id: str
+    created_at: datetime
+    question: Optional[str] = None
+    status: Optional[str] = None
+    answer: Optional[str] = None
+
+class SessionOperations(DatabaseDriver):
     """Extended DatabaseDriver class with additional member and session operations"""
-    
-    def check_phone_number_exists(self, phone_number: str) -> bool:
-        """Check if a phone number exists in the members database"""
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT phone_number FROM members WHERE phone_number = ?", (phone_number,))
-            existing_member = cursor.fetchone()
-            return existing_member is not None
-
-    def add_phone_number(self, phone_number: str) -> bool:
-        """Add a phone number to the members database. Returns True if successful."""
-        try:
-            with self._get_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute("INSERT INTO members (phone_number) VALUES (?)", (phone_number,))
-                conn.commit()
-                logging.info(f"Phone number {phone_number} added to members database")
-                return True
-        except sqlite3.IntegrityError:
-            logging.error(f"Phone number {phone_number} already exists")
-            return False
-        except Exception as e:
-            logging.error(f"Error adding phone number {phone_number}: {e}")
-            return False
 
     def add_member_session(self, phone_number: str, session_id: str) -> bool:
         """Add a phone number and session_id to the member_sessions table. Returns True if successful."""
@@ -44,21 +30,6 @@ class MembershipOperations(DatabaseDriver):
         except Exception as e:
             logging.error(f"Error adding session entry for phone number {phone_number}: {e}")
             return False
-
-    def get_member_by_phone(self, phone_number: str) -> Optional[Member]:
-        """Get member by phone number"""
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM members WHERE phone_number = ?", (phone_number,))
-            row = cursor.fetchone()
-            if not row:
-                return None
-            
-            return Member(
-                id=row[0],
-                phone_number=row[1],
-                created_at=datetime.fromisoformat(row[2])
-            )
 
     def get_member_sessions(self, phone_number: str) -> list[MemberSession]:
         """Get all sessions for a phone number"""
@@ -139,25 +110,16 @@ class MembershipOperations(DatabaseDriver):
             logging.error(f"Error updating session {session_id}: {e}")
             return False
 
-    def get_all_member_sessions(self, status: Optional[str] = None) -> list[dict]:
+    def get_all_member_sessions(self) -> list[dict]:
         """Get all member sessions from the database"""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-
-            if status is not None:
-                cursor.execute("""
-                    SELECT id, phone_number, session_id, created_at, question, status, answer
-                    FROM member_sessions
-                    WHERE status = ?
-                    ORDER BY created_at DESC
-                """, (status,))
-            else:
-                cursor.execute("""
-                    SELECT id, phone_number, session_id, created_at, question, status, answer
-                    FROM member_sessions
-                    WHERE status IS NOT NULL AND status != ''
-                    ORDER BY created_at DESC
-                """)
+            cursor.execute("""
+                SELECT id, phone_number, session_id, created_at, question, status, answer
+                FROM member_sessions
+                WHERE status IS NOT NULL AND status != ''
+                ORDER BY created_at DESC
+            """)
             rows = cursor.fetchall()
             
             sessions = []

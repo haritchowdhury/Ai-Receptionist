@@ -1,80 +1,17 @@
 import logging
-from logging_config import setup_logging
 from livekit.agents import function_tool, RunContext
-import requests
-from membership_operations import MembershipOperations
+from dbDrivers.session_operations import SessionOperations
 import os
 from upstash_vector import Index
 import json
-from ai_response_formatter import format_response_with_ai
+from utils import format_response_with_ai, setup_logging, get_huggingface_embedding
 
-Member = MembershipOperations()
+db = SessionOperations()
 
 # Global variable to store current session_id
 current_session_id = None
 current_phone_number = None
 
-# HuggingFace embedding configuration
-def get_huggingface_embedding(text, api_key, model_name="BAAI/bge-small-en-v1.5"):
-    """Get embeddings from HuggingFace Inference API"""
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-
-    url = f"https://api-inference.huggingface.co/models/{model_name}"
-
-    response = requests.post(
-        url,
-        headers=headers,
-        json={"inputs": text}
-    )
-
-    if response.status_code == 200:
-        return response.json()
-    else:
-        raise Exception(f"HuggingFace API error: {response.status_code} - {response.text}")
-
-
-@function_tool()
-async def check_membership(
-    context: RunContext,  # type: ignore
-    ) -> str:
-    """
-    Check if a phone number is in the members database and add it if not present.
-    """
-    try:
-        logging.info(f"check_membership called")
-        # Access global session_id
-        global current_session_id
-        session_id = current_session_id or 'Unknown'
-        global current_phone_number
-        phone_number = current_phone_number or 'Unknown'
-        logging.info(f"Session ID in tool: {session_id}")
-        
-        cleaned_phone = Member.clean_phone_number(phone_number)
-        
-        if not cleaned_phone:
-            logging.error(f"Invalid phone number format: {phone_number}")
-            return "Please provide a valid phone number." 
-        
-        isMember = Member.check_phone_number_exists(cleaned_phone)
-        if isMember:
-            #db_driver.add_member_session(cleaned_phone, context.session.agent_state)
-            logging.info(f"Phone number {cleaned_phone} is already a member")
-            return "You are already a member"
-        else:
-            createMember = Member.add_phone_number(cleaned_phone)
-            if createMember:
-                return "Your number has been added to member's database"
-            else:
-                return "You are already a member"
-            
-    except Exception as e:
-        logging.error(f"Error processing membership for {phone_number}: {e}")
-        return f"An error occurred while processing your membership request."
-
-# Removed get_query_embedding function - now using local sentence-transformers model
 
 @function_tool()
 async def query_knowledge_base(
@@ -146,7 +83,7 @@ async def query_knowledge_base(
                         
                         # Add some structure to the response
                         if title and title != category:
-                            response += f"**{title}**\n"
+                            response += f"{title}\n"
                         response += f"{content}\n\n"
                 
                 logging.info(f"Vector database returned relevant results for query: {query}")
@@ -175,15 +112,13 @@ async def text_supervisor(
     """
     global current_session_id
     session_id = current_session_id or 'Unknown'
-    global current_phone_number
-    phone_number = current_phone_number or 'Unknown'
     
     logging.info(f"Text supervisor called with query: {query}")
     
     # Update the current session with the question and status
     if session_id != 'Unknown':
         try:
-            update_success = Member.update_member_session(session_id, "PENDING", question=query)
+            update_success = db.update_member_session(session_id, "PENDING", question=query)
             if update_success:
                 logging.info(f"Updated session {session_id} with question and PENDING status")
             else:
@@ -193,4 +128,4 @@ async def text_supervisor(
     else:
         logging.warning("Session ID is unknown, cannot update session status")
     
-    return "I don't have specific information about that in our spa knowledge base. Let me help you with general assistance or you can contact our spa directly for more detailed information."
+    return "I don't have specific information about that in our spa knowledge base. Let me check with my supervisor, I will get back to you over text message."

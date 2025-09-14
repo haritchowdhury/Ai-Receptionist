@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 import logging
-from logging_config import setup_logging
 from livekit import agents, rtc
 from livekit.agents import AgentSession, Agent, RoomInputOptions, RoomOutputOptions
 from livekit.plugins import (
@@ -9,19 +8,22 @@ from livekit.plugins import (
 from uuid import uuid4
 from livekit.plugins.turn_detector.english import EnglishModel
 from livekit.plugins import (groq, cartesia, deepgram, silero, google)
-from instructions import AGENT_INSTRUCTION, SESSION_INSTRUCTION
-from tools import check_membership, query_knowledge_base, text_supervisor, get_huggingface_embedding
-import tools
-from membership_operations import MembershipOperations
 import asyncio
 import os
 from upstash_vector import Index
+
+from tools import query_knowledge_base, text_supervisor
+from utils import get_huggingface_embedding, AGENT_INSTRUCTION, SESSION_INSTRUCTION, setup_logging
+import tools
+from dbDrivers.session_operations import SessionOperations
+
+
 
 
 load_dotenv()
 setup_logging()
 logger = logging.getLogger("groq-agent")
-Member = MembershipOperations()
+Member = SessionOperations()
 
 
 class Assistant(Agent):
@@ -41,7 +43,6 @@ class Assistant(Agent):
             vad=silero.VAD.load(),
             turn_detection=EnglishModel(),
             tools=[
-                check_membership,
                 query_knowledge_base,
                 text_supervisor
             ],
@@ -51,7 +52,6 @@ class Assistant(Agent):
         
 
         """
-        
         super().__init__(
             instructions=instructions,
             llm=google.beta.realtime.RealtimeModel(
@@ -61,7 +61,6 @@ class Assistant(Agent):
         vad=silero.VAD.load(),
         turn_detection = EnglishModel(),
         tools=[
-                check_membership,
                 query_knowledge_base,
                 text_supervisor
             ],
@@ -106,6 +105,9 @@ async def entrypoint(ctx: agents.JobContext):
 
     await ctx.connect()
 
+    # Caller's number
+    phone_number = "+555-9183746"
+
 
     logger.info(f"Connected to room: {ctx.room.name}")
     logger.info(f"Local participant: {ctx.room.local_participant.identity}")
@@ -132,7 +134,7 @@ async def entrypoint(ctx: agents.JobContext):
         transcription_enabled=True
     )
     
-    phone_number = "+555-9183746"
+    
     # Store session_id in global variable for access in tools
     tools.current_session_id = agent.session_id
     tools.current_phone_number = phone_number

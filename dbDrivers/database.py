@@ -1,26 +1,11 @@
 import sqlite3
 import logging
-from logging_config import setup_logging
+from utils import setup_logging
 from typing import Optional
 from contextlib import contextmanager
-from dataclasses import dataclass
 from datetime import datetime
 
-@dataclass
-class Member:
-    id: int
-    phone_number: str
-    created_at: datetime
 
-@dataclass
-class MemberSession:
-    id: int
-    phone_number: str
-    session_id: str
-    created_at: datetime
-    question: Optional[str] = None
-    status: Optional[str] = None
-    answer: Optional[str] = None
 
 class DatabaseDriver:
     def __init__(self, db_path: str = "members.db"):
@@ -38,15 +23,7 @@ class DatabaseDriver:
     def _init_db(self):
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
-            # Create members table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS members (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    phone_number TEXT UNIQUE NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
+        
             
             # Create member_sessions table
             cursor.execute("""
@@ -60,7 +37,6 @@ class DatabaseDriver:
                     answer TEXT
                 )
             """)
-
             # Create index for fast status queries
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_member_sessions_status ON member_sessions(status)

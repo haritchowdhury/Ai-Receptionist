@@ -1,6 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 from flask_apscheduler import APScheduler
-from membership_operations import MembershipOperations
+from dbDrivers.session_operations import SessionOperations
 import json
 import os
 import hashlib
@@ -11,7 +11,7 @@ from sentence_transformers import SentenceTransformer
 
 app = Flask(__name__)
 scheduler = APScheduler()
-db = MembershipOperations()
+db = SessionOperations()
 
 # Load environment variables
 load_dotenv()
@@ -189,6 +189,15 @@ def resolve_session():
         success = db.update_member_session(session_id, "RESOLVED", answer=answer.strip())
 
         if success:
+            # Append Q&A to salon_data.txt
+            if question and question.strip():
+                try:
+                    with open("IngestSalonData/salon_data.txt", "a", encoding="utf-8") as f:
+                        f.write(f"\nQ: {question.strip()}\nA: {answer.strip()}\n")
+                    print(f"SUCCESS: Q&A for session {session_id} appended to salon_data.txt")
+                except Exception as e:
+                    print(f"WARNING: Failed to append Q&A to salon_data.txt: {e}")
+
             # Ingest Q&A into vector database
             if question and question.strip():
                 vector_success = ingest_qa_to_vector_db(question.strip(), answer.strip(), session_id)

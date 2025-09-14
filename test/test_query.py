@@ -1,8 +1,11 @@
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from dotenv import load_dotenv
 from upstash_vector import Index
 from sentence_transformers import SentenceTransformer
-from ai_response_formatter import format_response_with_ai
+from utils import format_response_with_ai
 
 def test_sample_queries():
     """Test various sample queries against the vector database"""
