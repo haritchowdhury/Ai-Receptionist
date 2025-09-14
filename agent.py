@@ -132,7 +132,7 @@ async def entrypoint(ctx: agents.JobContext):
         transcription_enabled=True
     )
     
-    phone_number = "9474414995"
+    phone_number = "+555-9183746"
     # Store session_id in global variable for access in tools
     tools.current_session_id = agent.session_id
     tools.current_phone_number = phone_number

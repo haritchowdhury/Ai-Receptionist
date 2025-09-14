@@ -1,3 +1,6 @@
 upstash-vector
 flask
+flask-apscheduler
 requests
+python-dotenv
+sentence-transformers

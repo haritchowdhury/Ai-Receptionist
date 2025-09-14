@@ -1,160 +1,535 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Member Sessions</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-            color: #555;
-        }
-        tr:hover {
-            background-color: #f8f9fa;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-        .error {
-            color: #dc3545;
-            text-align: center;
-            padding: 20px;
-        }
-        .status {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .status-pending { background-color: #fff3cd; color: #856404; }
-        .status-resolved { background-color: #d1edff; color: #004085; }
-        .status-failed { background-color: #f8d7da; color: #721c24; }
-        .refresh-btn {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-        .refresh-btn:hover {
-            background-color: #0056b3;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        color: #555;
+      }
+      tr:hover {
+        background-color: #f8f9fa;
+      }
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+      }
+      .error {
+        color: #dc3545;
+        text-align: center;
+        padding: 20px;
+      }
+      .status {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .status-resolved {
+        background-color: #d1edff;
+        color: #004085;
+      }
+      .status-failed {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .refresh-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-bottom: 20px;
+      }
+      .refresh-btn:hover {
+        background-color: #0056b3;
+      }
+      .controls {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .filter-group label {
+        font-weight: bold;
+        color: #555;
+      }
+      .status-filter {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: white;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .status-filter:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+      }
+      .question-list {
+        max-width: 300px;
+        word-wrap: break-word;
+      }
+      .question-item {
+        display: block;
+        padding: 2px 0;
+        border-bottom: 1px solid #eee;
+      }
+      .question-item:last-child {
+        border-bottom: none;
+      }
+      .resolve-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .resolve-btn:hover {
+        background-color: #218838;
+      }
+      .resolve-btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-dialog {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .modal-header {
+        margin-bottom: 20px;
+      }
+      .modal-title {
+        margin: 0;
+        color: #333;
+      }
+      .modal-body {
+        margin-bottom: 20px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #555;
+      }
+      .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+      .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+      }
+      .modal-footer {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .btn-primary {
+        background-color: #007bff;
+        color: white;
+      }
+      .btn-primary:hover {
+        background-color: #0056b3;
+      }
+      .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+      }
+      .btn-secondary:hover {
+        background-color: #545b62;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>Member Sessions</h1>
-        <button class="refresh-btn" onclick="loadSessions()">Refresh Data</button>
-        <div id="content">
-            <div class="loading">Loading sessions...</div>
+      <h1>Pending Requests</h1>
+      <div class="controls">
+        <button class="refresh-btn" onclick="loadSessions()">
+          Refresh Data
+        </button>
+        <div class="filter-group">
+          <label for="status-filter">Filter by Status:</label>
+          <select
+            id="status-filter"
+            class="status-filter"
+            onchange="filterSessions()"
+          >
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="resolved">Resolved</option>
+            <option value="unresolved">Unresolved</option>
+          </select>
         </div>
+      </div>
+      <div id="content">
+        <div class="loading">Loading sessions...</div>
+      </div>
+    </div>
+
+    <!-- Resolve Session Modal -->
+    <div id="resolve-modal" class="modal-overlay">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">Resolve Session</h3>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="session-id-display">Session ID:</label>
+            <input
+              type="text"
+              id="session-id-display"
+              class="form-control"
+              readonly
+            />
+          </div>
+          <div class="form-group">
+            <label for="answer-input">Answer:</label>
+            <textarea
+              id="answer-input"
+              class="form-control"
+              rows="4"
+              placeholder="Enter your answer here..."
+              required
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="hideResolveModal()"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            onclick="submitResolveForm()"
+            id="submit-resolve-btn"
+          >
+            Resolve
+          </button>
+        </div>
+      </div>
     </div>
 
     <script>
-        async function loadSessions() {
-            const contentDiv = document.getElementById('content');
-            contentDiv.innerHTML = '<div class="loading">Loading sessions...</div>';
-            
-            try {
-                const response = await fetch('/api/member-sessions');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch sessions');
-                }
-                
-                const sessions = await response.json();
-                displaySessions(sessions);
-            } catch (error) {
-                contentDiv.innerHTML = `<div class="error">Error loading sessions: ${error.message}</div>`;
-            }
+      async function loadSessions() {
+        const contentDiv = document.getElementById("content");
+        contentDiv.innerHTML = '<div class="loading">Loading sessions...</div>';
+
+        try {
+          const response = await fetch("/api/member-sessions");
+          if (!response.ok) {
+            throw new Error("Failed to fetch sessions");
+          }
+
+          const sessions = await response.json();
+          displaySessions(sessions);
+        } catch (error) {
+          contentDiv.innerHTML = `<div class="error">Error loading sessions: ${error.message}</div>`;
         }
-        
-        function displaySessions(sessions) {
-            const contentDiv = document.getElementById('content');
-            
-            if (sessions.length === 0) {
-                contentDiv.innerHTML = '<div class="loading">No sessions found.</div>';
-                return;
-            }
-            
-            const table = document.createElement('table');
-            table.innerHTML = `
+      }
+
+      function displaySessions(sessions) {
+        const contentDiv = document.getElementById("content");
+
+        // Store sessions globally for filtering
+        allSessions = sessions;
+
+        if (sessions.length === 0) {
+          contentDiv.innerHTML =
+            '<div class="loading">No sessions found.</div>';
+          return;
+        }
+
+        const table = document.createElement("table");
+        table.innerHTML = `
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Phone Number</th>
-                        <th>Session ID</th>
                         <th>Created At</th>
                         <th>Question</th>
                         <th>Status</th>
                         <th>Answer</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${sessions.map(session => `
+                    ${sessions
+                      .map(
+                        (session) => `
                         <tr>
-                            <td>${session.id}</td>
-                            <td>${session.phone_number || '-'}</td>
-                            <td>${session.session_id || '-'}</td>
+                            <td>${session.phone_number || "-"}</td>
                             <td>${formatDate(session.created_at)}</td>
-                            <td>${session.question || '-'}</td>
+                            <td>${formatQuestions(session.question)}</td>
                             <td>${formatStatus(session.status)}</td>
-                            <td>${session.answer || '-'}</td>
+                            <td>${session.answer || "-"}</td>
+                            <td>${formatActions(session)}</td>
                         </tr>
-                    `).join('')}
+                    `
+                      )
+                      .join("")}
                 </tbody>
             `;
-            
-            contentDiv.innerHTML = '';
-            contentDiv.appendChild(table);
+
+        contentDiv.innerHTML = "";
+        contentDiv.appendChild(table);
+
+        // Reset filter to 'all' when new data is loaded
+        document.getElementById("status-filter").value = "all";
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return "-";
+        const date = new Date(dateStr);
+        return date.toLocaleString();
+      }
+
+      function formatStatus(status) {
+        if (!status) return "-";
+        const className = `status status-${status.toLowerCase()}`;
+        return `<span class="${className}">${status}</span>`;
+      }
+
+      function formatQuestions(questionsStr) {
+        if (!questionsStr) return "-";
+
+        // Split by comma and format as a list
+        const questions = questionsStr
+          .split(",")
+          .map((q) => q.trim())
+          .filter((q) => q);
+        if (questions.length <= 1) {
+          return questionsStr;
         }
-        
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const date = new Date(dateStr);
-            return date.toLocaleString();
+
+        const questionItems = questions
+          .map((question) => `<span class="question-item">${question}</span>`)
+          .join("");
+
+        return `<div class="question-list">${questionItems}</div>`;
+      }
+
+      function formatActions(session) {
+        if (!session.status || session.status.toLowerCase() !== "pending") {
+          return "-";
         }
-        
-        function formatStatus(status) {
-            if (!status) return '-';
-            const className = `status status-${status.toLowerCase()}`;
-            return `<span class="${className}">${status}</span>`;
+
+        return `<button class="resolve-btn" onclick="showResolveModal('${session.session_id}')">Resolve</button>`;
+      }
+
+      // Store sessions globally for filtering
+      let allSessions = [];
+      let currentResolvingSessionId = null;
+
+      function filterSessions() {
+        const filterValue = document.getElementById("status-filter").value;
+        const table = document.querySelector("table");
+
+        if (!table || !allSessions.length) return;
+
+        const tbody = table.querySelector("tbody");
+
+        if (filterValue === "all") {
+          // Show all rows
+          const rows = tbody.querySelectorAll("tr");
+          rows.forEach((row) => (row.style.display = ""));
+        } else {
+          // Filter rows based on status
+          const rows = tbody.querySelectorAll("tr");
+          rows.forEach((row, index) => {
+            const session = allSessions[index];
+            if (
+              session &&
+              session.status &&
+              session.status.toLowerCase() === filterValue
+            ) {
+              row.style.display = "";
+            } else {
+              row.style.display = "none";
+            }
+          });
         }
-        
-        // Load sessions when page loads
-        document.addEventListener('DOMContentLoaded', loadSessions);
+      }
+
+      // Modal functions
+      function showResolveModal(sessionId) {
+        currentResolvingSessionId = sessionId;
+        document.getElementById("session-id-display").value = sessionId;
+        document.getElementById("answer-input").value = "";
+        document.getElementById("resolve-modal").style.display = "flex";
+        document.getElementById("answer-input").focus();
+      }
+
+      function hideResolveModal() {
+        currentResolvingSessionId = null;
+        document.getElementById("session-id-display").value = "";
+        document.getElementById("answer-input").value = "";
+        document.getElementById("resolve-modal").style.display = "none";
+      }
+
+      async function submitResolveForm() {
+        const answer = document.getElementById("answer-input").value.trim();
+
+        if (!answer) {
+          alert("Please enter an answer before resolving.");
+          return;
+        }
+
+        if (!currentResolvingSessionId) {
+          alert("No session selected for resolution.");
+          return;
+        }
+
+        const submitBtn = document.getElementById("submit-resolve-btn");
+        const originalText = submitBtn.textContent;
+
+        try {
+          // Show loading state
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Resolving...";
+
+          const response = await fetch("/api/resolve-session", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              session_id: currentResolvingSessionId,
+              answer: answer,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            alert("Session resolved successfully!");
+            hideResolveModal();
+            loadSessions(); // Reload the table to show updated data
+          } else {
+            alert(`Error: ${result.error || "Failed to resolve session"}`);
+          }
+        } catch (error) {
+          alert(`Network error: ${error.message}`);
+        } finally {
+          // Reset button state
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
+
+      // Handle ESC key to close modal
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          hideResolveModal();
+        }
+      });
+
+      // Handle Enter key in textarea to submit
+      document.addEventListener("keydown", function (event) {
+        if (
+          event.key === "Enter" &&
+          event.ctrlKey &&
+          document.getElementById("resolve-modal").style.display === "flex"
+        ) {
+          event.preventDefault();
+          submitResolveForm();
+        }
+      });
+
+      // Close modal when clicking outside
+      document
+        .getElementById("resolve-modal")
+        .addEventListener("click", function (event) {
+          if (event.target === this) {
+            hideResolveModal();
+          }
+        });
+
+      // Load sessions when page loads
+      document.addEventListener("DOMContentLoaded", loadSessions);
     </script>
-</body>
+  </body>
 </html>

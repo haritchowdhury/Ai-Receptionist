@@ -60,6 +60,11 @@ class DatabaseDriver:
                     answer TEXT
                 )
             """)
+
+            # Create index for fast status queries
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_member_sessions_status ON member_sessions(status)
+            """)
             
             conn.commit()
             logging.info("Database initialized successfully")

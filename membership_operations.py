@@ -139,15 +139,25 @@ class MembershipOperations(DatabaseDriver):
             logging.error(f"Error updating session {session_id}: {e}")
             return False
 
-    def get_all_member_sessions(self) -> list[dict]:
+    def get_all_member_sessions(self, status: Optional[str] = None) -> list[dict]:
         """Get all member sessions from the database"""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                SELECT id, phone_number, session_id, created_at, question, status, answer
-                FROM member_sessions
-                ORDER BY created_at DESC
-            """)
+
+            if status is not None:
+                cursor.execute("""
+                    SELECT id, phone_number, session_id, created_at, question, status, answer
+                    FROM member_sessions
+                    WHERE status = ?
+                    ORDER BY created_at DESC
+                """, (status,))
+            else:
+                cursor.execute("""
+                    SELECT id, phone_number, session_id, created_at, question, status, answer
+                    FROM member_sessions
+                    WHERE status IS NOT NULL AND status != ''
+                    ORDER BY created_at DESC
+                """)
             rows = cursor.fetchall()
             
             sessions = []
