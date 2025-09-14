@@ -21,7 +21,6 @@ from dbDrivers.session_operations import SessionOperations
 
 
 load_dotenv()
-setup_logging()
 logger = logging.getLogger("groq-agent")
 Member = SessionOperations()
 
@@ -68,6 +67,7 @@ class Assistant(Agent):
         )
         """
         self.session_id = str(uuid4())
+        setup_logging(self.session_id)
 
     async def _pre_warm_services(self):
         """Pre-warm HuggingFace and Upstash services to avoid cold starts"""

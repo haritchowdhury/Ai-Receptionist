@@ -133,7 +133,7 @@ def format_response_with_ai(
         return "I apologize, but I'm having technical difficulties at the moment. Please call us directly, and we'll be happy to assist you."
 
 
-def setup_logging():
+def setup_logging(session_id=None):
     """
     Configure logging to output to both console and file
     """
@@ -142,8 +142,11 @@ def setup_logging():
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    # Generate log filename with timestamp
-    log_filename = f"ai_receptionist_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+    # Generate log filename with session_id if provided, otherwise use timestamp
+    if session_id:
+        log_filename = f"ai_receptionist_{session_id}.log"
+    else:
+        log_filename = f"ai_receptionist_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
     log_filepath = os.path.join(log_dir, log_filename)
 
     # Create formatter

@@ -113,7 +113,7 @@ async def text_supervisor(
     global current_session_id
     session_id = current_session_id or 'Unknown'
     
-    logging.info(f"Text supervisor called with query: {query}")
+    logging.info(f"Texting supervisor with query: {query}")
     
     # Update the current session with the question and status
     if session_id != 'Unknown':

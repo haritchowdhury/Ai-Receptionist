@@ -189,6 +189,19 @@ def resolve_session():
         success = db.update_member_session(session_id, "RESOLVED", answer=answer.strip())
 
         if success:
+            # Log follow-up text to session-specific log file
+            try:
+                log_filename = f"logs/ai_receptionist_{session_id}.log"
+                if os.path.exists(log_filename):
+                    with open(log_filename, "a", encoding="utf-8") as log_file:
+                        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        log_file.write(f"{timestamp} - Follow up text was sent to customer with phone number {current_session['phone_number']}\n")
+                        log_file.write(f"{timestamp} - Follow up message: {answer.strip()}\n")
+                    print(f"SUCCESS: Follow-up logged to {log_filename}")
+                else:
+                    print(f"WARNING: Log file {log_filename} not found")
+            except Exception as e:
+                print(f"WARNING: Failed to log follow-up to session log file: {e}")
             # Append Q&A to salon_data.txt
             if question and question.strip():
                 try:
