@@ -43,7 +43,8 @@ def test_sample_queries():
     
     # Test queries
     test_queries = [
-        "What is the distance to moon from earth?"
+        "What is the distance to moon from earth?",
+        "What is the phone number of your salon?"
     ]
     
     print("\n=== TESTING SAMPLE QUERIES ===\n")

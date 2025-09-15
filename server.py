@@ -196,6 +196,7 @@ def resolve_session():
                     with open(log_filename, "a", encoding="utf-8") as log_file:
                         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                         log_file.write(f"{timestamp} - Follow up text was sent to customer with phone number {current_session['phone_number']}\n")
+                        log_file.write(f"{timestamp} - Client's Query message: {question.strip()}\n")
                         log_file.write(f"{timestamp} - Follow up message: {answer.strip()}\n")
                     print(f"SUCCESS: Follow-up logged to {log_filename}")
                 else:
