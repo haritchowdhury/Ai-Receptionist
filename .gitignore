@@ -186,5 +186,9 @@ Thumbs.db
 logs/
 *.log
 
+# Database files
+*.db
+members.db
+
 # Claude Code
 .claude/
