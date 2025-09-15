@@ -219,12 +219,28 @@
       .btn-secondary:hover {
         background-color: #545b62;
       }
+      .nav-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-bottom: 20px;
+        margin-right: 10px;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .nav-btn:hover {
+        background-color: #218838;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Pending Requests</h1>
+      <h1>All Requests</h1>
       <div class="controls">
+        <a href="/resolved" class="nav-btn">View Resolved Sessions →</a>
         <button class="refresh-btn" onclick="loadSessions()">
           Refresh Data
         </button>
@@ -236,7 +252,7 @@
             onchange="filterSessions()"
           >
             <option value="all">All</option>
-            <option value="pending">Pending</option>
+            <option value="pending" selected>Pending</option>
             <option value="resolved">Resolved</option>
             <option value="unresolved">Unresolved</option>
           </select>
@@ -357,8 +373,9 @@
         contentDiv.innerHTML = "";
         contentDiv.appendChild(table);
 
-        // Reset filter to 'all' when new data is loaded
-        document.getElementById("status-filter").value = "all";
+        // Set filter to 'pending' when new data is loaded
+        document.getElementById("status-filter").value = "pending";
+        filterSessions();
       }
 
       function formatDate(dateStr) {

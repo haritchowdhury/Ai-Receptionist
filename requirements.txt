@@ -1,6 +1,46 @@
-upstash-vector
-flask
-flask-apscheduler
-requests
-python-dotenv
-sentence-transformers
+# Core Dependencies
+python-dotenv>=1.0.0
+
+# LiveKit Real-time Communication
+livekit>=0.15.0
+livekit-agents>=0.8.0
+livekit-plugins-groq>=0.5.0
+livekit-plugins-cartesia>=0.2.0
+livekit-plugins-deepgram>=0.6.0
+livekit-plugins-silero>=0.5.0
+livekit-plugins-google>=0.5.0
+
+# AI/ML Libraries
+groq>=0.4.0
+sentence-transformers>=2.2.0
+transformers>=4.30.0
+
+# Vector Database
+upstash-vector>=0.4.0
+
+# Web Framework
+Flask>=2.3.0
+Flask-APScheduler>=1.13.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Database
+sqlite3  # Built-in Python module
+
+# Utilities
+uuid  # Built-in Python module
+hashlib  # Built-in Python module
+logging  # Built-in Python module
+datetime  # Built-in Python module
+typing  # Built-in Python module
+dataclasses  # Built-in Python module
+contextlib  # Built-in Python module
+os  # Built-in Python module
+sys  # Built-in Python module
+asyncio  # Built-in Python module
+json  # Built-in Python module
+
+# Development/Testing (Optional)
+pytest>=7.0.0
+pytest-asyncio>=0.21.0

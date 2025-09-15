@@ -1,13 +1,11 @@
 from flask import Flask, render_template, jsonify, request
 from flask_apscheduler import APScheduler
 from dbDrivers.session_operations import SessionOperations
-import json
 import os
-import hashlib
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from upstash_vector import Index
-from sentence_transformers import SentenceTransformer
+from utils import ingest_qa_to_vector_db
+
 
 app = Flask(__name__)
 scheduler = APScheduler()
@@ -20,85 +18,11 @@ load_dotenv()
 embedding_model = None
 vector_client = None
 
-def initialize_vector_components():
-    """Initialize embedding model and vector client"""
-    global embedding_model, vector_client
+request_resolution_time = int(os.getenv("REQUEST_RESOLUTION_TIME"))
+scheduler_interval = int(os.getenv("SCHEDULER_INTERVAL"))
+print(request_resolution_time, scheduler_interval)
 
-    try:
-        # Initialize embedding model
-        if embedding_model is None:
-            embedding_model = SentenceTransformer('BAAI/bge-small-en-v1.5')
-            print("SUCCESS: Embedding model loaded")
-
-        # Initialize Upstash Vector client
-        if vector_client is None:
-            if not os.getenv("UPSTASH_VECTOR_REST_URL") or not os.getenv("UPSTASH_VECTOR_REST_TOKEN"):
-                print("WARNING: Missing Upstash environment variables - vector ingestion disabled")
-                return False
-
-            vector_client = Index(
-                url=os.getenv("UPSTASH_VECTOR_REST_URL"),
-                token=os.getenv("UPSTASH_VECTOR_REST_TOKEN")
-            )
-            print("SUCCESS: Connected to Upstash Vector database")
-
-        return True
-    except Exception as e:
-        print(f"ERROR: Failed to initialize vector components: {e}")
-        return False
-
-def create_vector_id(text):
-    """Create a unique ID for each text"""
-    return hashlib.md5(text.encode()).hexdigest()
-
-def ingest_qa_to_vector_db(question, answer, session_id):
-    """Ingest question-answer pair into vector database"""
-    if not initialize_vector_components():
-        print("WARNING: Vector database components not available - skipping ingestion")
-        return False
-
-    try:
-        namespace = os.getenv("NAMESPACE")
-        if not namespace:
-            print("WARNING: Missing NAMESPACE environment variable - skipping vector ingestion")
-            return False
-
-        # Combine question and answer for better context
-        qa_content = f"Q: {question}\nA: {answer}"
-
-        # Get embedding
-        embedding = embedding_model.encode([qa_content]).tolist()[0]
-
-        # Create vector data
-        vector_id = create_vector_id(qa_content)
-        vector_data = {
-            "id": vector_id,
-            "vector": embedding,
-            "metadata": {
-                'title': f"Q&A - Session {session_id}",
-                'category': 'Customer_QA',
-                'question': question,
-                'answer': answer,
-                'session_id': session_id,
-                'content': qa_content
-            },
-            "data": qa_content
-        }
-
-        # Upsert to vector database
-        response = vector_client.upsert(
-            vectors=[vector_data],
-            namespace=namespace
-        )
-
-        print(f"SUCCESS: Q&A ingested to vector database for session {session_id}")
-        return True
-
-    except Exception as e:
-        print(f"ERROR: Failed to ingest Q&A to vector database: {e}")
-        return False
-
-@scheduler.task('interval', id='periodic_task', seconds=1)
+@scheduler.task('interval', id='periodic_task', seconds=scheduler_interval)
 def scheduled_job():
     print("runs every second")
     """Task that runs every second"""
@@ -119,7 +43,7 @@ def scheduled_job():
                 time_diff = current_time - created_at
 
                 # If more than 60 seconds old, mark as UNRESOLVED
-                if time_diff.total_seconds() > 60:
+                if time_diff.total_seconds() > request_resolution_time:
                     session_id = session.get('session_id')
                     if session_id:
                         success = db.update_member_session(session_id, "UNRESOLVED")
@@ -141,10 +65,23 @@ def scheduled_job():
 def index():
     return render_template('index.html')
 
+@app.route('/resolved')
+def resolved():
+    return render_template('resolved.html')
+
 @app.route('/api/member-sessions')
 def get_member_sessions():
     try:
         sessions = db.get_all_member_sessions()
+        print(sessions)
+        return jsonify(sessions)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/resolved-sessions')
+def get_resolved_sessions():
+    try:
+        sessions = db.get_all_member_sessions("RESOLVED")
         print(sessions)
         return jsonify(sessions)
     except Exception as e:
