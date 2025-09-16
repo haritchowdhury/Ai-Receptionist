@@ -4,7 +4,88 @@ from dbDrivers.session_operations import SessionOperations
 import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from utils import ingest_qa_to_vector_db
+import hashlib
+from upstash_vector import Index
+from sentence_transformers import SentenceTransformer
+import json
+
+def initialize_vector_components():
+    """Initialize embedding model and vector client"""
+    global embedding_model, vector_client
+
+    try:
+        # Initialize embedding model
+        if embedding_model is None:
+            embedding_model = SentenceTransformer('BAAI/bge-small-en-v1.5')
+            print("SUCCESS: Embedding model loaded")
+
+        # Initialize Upstash Vector client
+        if vector_client is None:
+            if not os.getenv("UPSTASH_VECTOR_REST_URL") or not os.getenv("UPSTASH_VECTOR_REST_TOKEN"):
+                print("WARNING: Missing Upstash environment variables - vector ingestion disabled")
+                return False
+
+            vector_client = Index(
+                url=os.getenv("UPSTASH_VECTOR_REST_URL"),
+                token=os.getenv("UPSTASH_VECTOR_REST_TOKEN")
+            )
+            print("SUCCESS: Connected to Upstash Vector database")
+
+        return True
+    except Exception as e:
+        print(f"ERROR: Failed to initialize vector components: {e}")
+        return False
+
+def create_vector_id(text):
+    """Create a unique ID for each text"""
+    return hashlib.md5(text.encode()).hexdigest()
+
+def ingest_qa_to_vector_db(question, answer, session_id):
+    """Ingest question-answer pair into vector database"""
+    if not initialize_vector_components():
+        print("WARNING: Vector database components not available - skipping ingestion")
+        return False
+
+    try:
+        namespace = os.getenv("NAMESPACE")
+        if not namespace:
+            print("WARNING: Missing NAMESPACE environment variable - skipping vector ingestion")
+            return False
+
+        # Combine question and answer for better context
+        qa_content = f"Q: {question}\nA: {answer}"
+
+        # Get embedding
+        embedding = embedding_model.encode([qa_content]).tolist()[0]
+
+        # Create vector data
+        vector_id = create_vector_id(qa_content)
+        vector_data = {
+            "id": vector_id,
+            "vector": embedding,
+            "metadata": {
+                'title': f"Q&A - Session {session_id}",
+                'category': 'Customer_QA',
+                'question': question,
+                'answer': answer,
+                'session_id': session_id,
+                'content': qa_content
+            },
+            "data": qa_content
+        }
+
+        # Upsert to vector database
+        response = vector_client.upsert(
+            vectors=[vector_data],
+            namespace=namespace
+        )
+
+        print(f"SUCCESS: Q&A ingested to vector database for session {session_id}")
+        return True
+
+    except Exception as e:
+        print(f"ERROR: Failed to ingest Q&A to vector database: {e}")
+        return False
 
 
 app = Flask(__name__)

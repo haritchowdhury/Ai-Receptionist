@@ -66,7 +66,7 @@ async def query_knowledge_base(
                 ai_response = format_response_with_ai(combined_content.strip(), query)
                 if len(ai_response) == 0:
                     logging.info(f"Vector database did not return relevant results")
-                    return await text_supervisor(context, query)
+                    return "No relevant information found"
                 else:
                     logging.info(f"Vector database returned relevant results for query: {query}")
                     logging.info(f"Ai's response: {ai_response}")
@@ -91,12 +91,12 @@ async def query_knowledge_base(
         else:
             # No relevant results found, fall back to text_supervisor
             logging.info(f"No relevant results in vector database for query: {query}, falling back to text_supervisor")
-            return await text_supervisor(context, query)
+            return "No relevant information found"
             
     except Exception as e:
         logging.error(f"Error querying vector database: {e}")
         # Fall back to text_supervisor on error
-        return await text_supervisor(context, query)
+        return "No relevant information found"
 
 @function_tool()
 async def text_supervisor(

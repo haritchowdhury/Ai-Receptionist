@@ -13,7 +13,7 @@ import os
 from upstash_vector import Index
 
 from tools import query_knowledge_base, text_supervisor
-from utils import get_huggingface_embedding, AGENT_INSTRUCTION, SESSION_INSTRUCTION, setup_logging
+from utils import get_huggingface_embedding, AGENT_INSTRUCTION, SESSION_INSTRUCTION, GREETING_MESSAGE, setup_logging
 import tools
 from dbDrivers.session_operations import SessionOperations
 
@@ -34,11 +34,7 @@ class Assistant(Agent):
             instructions=instructions,
             llm=groq.LLM(model="moonshotai/kimi-k2-instruct-0905"),
             stt=deepgram.STT(),
-            tts=cartesia.TTS(
-                model="sonic-2",
-                speed="fast",
-                voice="bf0a246a-8642-498a-9950-80c35e9276b5",
-            ),
+            tts=cartesia.TTS(model="sonic-2", voice="f786b574-daa5-4673-aa0c-cbe3e8534c02"),
             vad=silero.VAD.load(),
             turn_detection=EnglishModel(),
             tools=[
@@ -47,25 +43,6 @@ class Assistant(Agent):
             ],
 
         )
-        
-        
-
-        """
-        super().__init__(
-            instructions=instructions,
-            llm=google.beta.realtime.RealtimeModel(
-            voice="Aoede",
-            temperature=0.8,
-        ),
-        vad=silero.VAD.load(),
-        turn_detection = EnglishModel(),
-        tools=[
-                query_knowledge_base,
-                text_supervisor
-            ],
-
-        )
-        """
         self.session_id = str(uuid4())
         setup_logging(self.session_id)
 

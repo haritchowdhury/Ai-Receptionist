@@ -26,7 +26,7 @@ class Assistant(Agent):
             llm=groq.LLM(model="llama3-8b-8192"),
             stt=deepgram.STT(),
             tts=cartesia.TTS(
-                model="sonic-2",
+                model="sonic-2-2025-03-07",
                 speed="fast",
                 voice="bf0a246a-8642-498a-9950-80c35e9276b5",
             ),
